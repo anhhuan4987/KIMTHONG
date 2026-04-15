@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: sessions
+    // Fields:
+    //   - customerName: string (required)
+    //   - phoneNumber: string (optional)
+    //   - numPeople: number (optional)
+    //   - startTime: timestamp (required)
+    //   - endTime: timestamp (optional)
+    //   - sessionType: string (enum: 5h, 10h, flexible)
+    //   - status: string (enum: active, completed)
+    //   - items: list of maps {name: string, quantity: number, price: number}
+    //   - fishWeight: number (optional)
+    //   - fishPricePerKg: number (optional)
+    //   - hourlyRate: number (optional)
+    //   - totalAmount: number (optional)
+    //
+    // Collection: customers
+    // Fields:
+    //   - name: string (required)
+    //   - phoneNumber: string (required, ID)
+    //   - totalSpent: number
+    //   - visitCount: number
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "hocaukimthong@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidSession(data) {
+      return data.customerName is string && data.customerName.size() > 0 && data.customerName.size() < 100 &&
+             data.status in ['active', 'completed'] &&
+             (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() < 20)) &&
+             (!('numPeople' in data) || data.numPeople is number) &&
+             (!('items' in data) || data.items is list);
+    }
+
+    function isValidCustomer(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.phoneNumber is string && data.phoneNumber.size() > 0 && data.phoneNumber.size() < 20;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /sessions/{sessionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSession(request.resource.data);
+      allow update: if isAuthenticated() && isValidSession(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /customers/{customerId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidCustomer(request.resource.data);
+      allow update: if isAuthenticated() && isValidCustomer(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAdmin();
+    }
+  }
+}

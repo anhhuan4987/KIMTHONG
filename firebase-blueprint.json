@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "Session": {
+      "title": "Fishing Session",
+      "description": "A fishing session for a customer",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "numPeople": { "type": "number" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "sessionType": { "type": "string", "enum": ["5h", "10h", "flexible"] },
+        "status": { "type": "string", "enum": ["active", "completed"] },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "quantity": { "type": "number" },
+              "price": { "type": "number" }
+            }
+          }
+        },
+        "fishWeight": { "type": "number" },
+        "fishPricePerKg": { "type": "number" },
+        "hourlyRate": { "type": "number" },
+        "totalAmount": { "type": "number" }
+      },
+      "required": ["customerName", "startTime", "status"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "totalSpent": { "type": "number" },
+        "visitCount": { "type": "number" }
+      },
+      "required": ["name", "phoneNumber"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "App configuration for pricing and products",
+      "type": "object",
+      "properties": {
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "duration": { "type": "number" },
+              "price": { "type": "number" },
+              "isFlexible": { "type": "boolean" }
+            }
+          }
+        },
+        "products": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "price": { "type": "number" }
+            }
+          }
+        },
+        "fishBuybackPrice": { "type": "number" },
+        "hourlyRate": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "/sessions": {
+      "schema": "Session",
+      "description": "Active and past fishing sessions"
+    },
+    "/customers": {
+      "schema": "Customer",
+      "description": "Customer records"
+    },
+    "/settings": {
+      "schema": "Settings",
+      "description": "Global app settings"
+    }
+  }
+}
